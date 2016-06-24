@@ -1,0 +1,124 @@
+//
+//  Objects.swift
+//  Notes
+//
+//  Created by Eric Saba on 1/31/16.
+//  Copyright © 2016 Eric Saba. All rights reserved.
+//
+
+import Foundation
+import MapKit
+import QuartzCore
+
+let ACCENT_COLOR: UIColor = UIColor(red: 14.0 / 255, green: 127.0 / 255, blue: 255.0 / 255, alpha: 1.0)
+let CAMERA_ZOOM: Float = 19.8
+let BUTTON_SIZE: CGFloat = 60.0
+let TYPE_SIZE: CGFloat = 40.0
+let Y_INSET: CGFloat = 80.0
+
+class Note: NSObject {
+    var lat: Double?
+    var long: Double?
+    var text: String?
+    var dist: Double?
+    var dir: Double?
+    var type: String?
+    
+    
+    init(note: String, latitude: Double, longitude: Double, userLat: Double, userLong: Double, noteType: String) {
+        super.init()
+        text = note
+        lat = latitude
+        long = longitude
+        dist = CallHandler().findDistance(userLat, long1: userLong, lat2: latitude, long2: longitude)
+        dir = CallHandler().findDirection(userLat, long1: userLong, lat2: latitude, long2: longitude)
+        type = noteType
+    }
+    
+    func setLocation(latitude: Double, longitude: Double) {
+        lat = latitude
+        long = longitude
+    }
+    
+    func setNote(note: String) {
+        text = note
+    }
+    
+    func updateDistance(userLat: Double, userLong: Double) {
+        dist = CallHandler().findDistance(userLat, long1: userLong, lat2: lat!, long2: long!)
+        dir = CallHandler().findDirection(userLat, long1: userLong, lat2: lat!, long2: long!)
+    }
+    
+    func setNoteType(noteType: String) {
+        type = noteType
+    }
+}
+
+class MapNote: NSObject, MKAnnotation {
+    let title: String?
+    let coordinate: CLLocationCoordinate2D
+    
+    init(title: String, coordinate: CLLocationCoordinate2D) {
+        self.title = title
+        self.coordinate = coordinate
+        
+        super.init()
+    }
+    
+    var subtitle: String? {
+        return ""
+    }
+}
+
+<<<<<<< HEAD
+class Contact: NSObject {
+    let name: String?
+    let user: PFUser?
+    
+    init(name: String, user: PFUser) {
+        self.name = name
+        self.user = user
+        super.init()
+    }
+=======
+class Update: NSObject {
+    let title: String
+    let desc: String
+    let seen: Bool
+    
+    init(title: String, desc: String, seen: Bool) {
+        self.title = title
+        self.desc = desc
+        self.seen = seen
+        super.init()
+    }
+    
+    override init() {
+        self.title = ""
+        self.desc = ""
+        self.seen = true
+        super.init()
+    }
+    
+>>>>>>> a42c77d75fdd673017d83d99d8e40ccf54ce65ef
+}
+
+class SegueFromLeft: UIStoryboardSegue {
+    
+    override func perform() {
+        let src: UIViewController = self.sourceViewController
+        let dst: UIViewController = self.destinationViewController
+        let transition: CATransition = CATransition()
+        let timeFunc : CAMediaTimingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut)
+        transition.duration = 0.25
+        transition.timingFunction = timeFunc
+        transition.type = kCATransitionPush
+        transition.subtype = kCATransitionFromLeft
+        if (src.isMemberOfClass(ListTableViewController)) {
+            transition.subtype = kCATransitionFromRight
+        }
+        src.navigationController!.view.layer.addAnimation(transition, forKey: kCATransition)
+        src.navigationController!.pushViewController(dst, animated: false)
+    }
+    
+}

@@ -1,0 +1,174 @@
+//
+//  CallHandler.swift
+//  Notes
+//
+//  Created by Eric Saba on 1/25/16.
+//  Copyright © 2016 Eric Saba. All rights reserved.
+//
+
+import Foundation
+
+class CallHandler {
+    let typesArray: [String] = ["anon", "personal", "scenery", "restaurant", "caution"]
+    
+    func postAnon(note: String, lat: Double, long: Double, type: String) {
+        //Parse
+        print(note)
+        let post = PFObject(className: "AnonPost")
+        post["note"] = note
+        post.relationForKey("postedBy").addObject(PFUser.currentUser()!)
+        post["location"] = PFGeoPoint(latitude: lat, longitude: long)
+        post["type"] = type
+        post.saveInBackgroundWithBlock { (success: Bool, error: NSError?) -> Void in
+            if success {
+                print(String(format: "successfully posted %@ at %f, %f", note, lat, long))
+            }
+            else {
+                
+            }
+        }
+    }
+    
+<<<<<<< HEAD
+    func postFollow(fromUser: PFUser, toUser: PFUser) {
+        let post = PFObject(className: "Follows")
+        post["fromUser"] = fromUser
+        post["toUser"] = toUser
+        post.saveInBackgroundWithBlock { (success: Bool, error: NSError?) -> Void in
+            if success {
+            }
+            else {
+                //handle error
+                print(error)
+=======
+    func getLatestUpdate(completion: (success: Bool, update: Update, updatesObj: PFObject) -> Void) {
+        let query = PFQuery(className: "Updates")
+        query.orderByDescending("createdAt")
+        query.getFirstObjectInBackgroundWithBlock { (object: PFObject?, error: NSError?) in
+            if error == nil {
+                if let object = object {
+                    let title = object["title"] as! String
+                    let desc = object["description"] as! String
+                    let relationQuery: PFQuery = object.relationForKey("seen").query()
+                    relationQuery.whereKey("username", equalTo: (PFUser.currentUser()?.username)!)
+                    relationQuery.findObjectsInBackgroundWithBlock({ (usersCompleted: [PFObject]?, relationError: NSError?) in
+                        if relationError == nil {
+                            if let usersCompleted = usersCompleted {
+                                let update: Update?
+                                if usersCompleted.count > 0 {
+                                    update = Update(title: title, desc: desc, seen: true)
+                                } else {
+                                    update = Update(title: title, desc: desc, seen: false)
+                                }
+                                completion(success: true, update: update!, updatesObj: object)
+                            }
+                        }
+                        else {
+                            print("Error: \(error!) \(error!.userInfo)")
+                            completion(success: false, update: Update(), updatesObj: object)
+                        }
+                    })
+                }
+            } else {
+                print("Error: \(error!) \(error!.userInfo)")
+                completion(success: false, update: Update(), updatesObj: PFObject())
+>>>>>>> a42c77d75fdd673017d83d99d8e40ccf54ce65ef
+            }
+        }
+    }
+    
+<<<<<<< HEAD
+=======
+    func addSeenToUpdate(updatesObj: PFObject) {
+        updatesObj.relationForKey("seen").addObject(PFUser.currentUser()!)
+        updatesObj.saveInBackground()
+    }
+    
+>>>>>>> a42c77d75fdd673017d83d99d8e40ccf54ce65ef
+    func getAllNotes(lat: Double, long: Double, completion: (success: Bool, dict: Dictionary<String, [Note]>) -> Void) {
+        var retDict = Dictionary<String, [Note]>()
+        for s in typesArray {
+            retDict.updateValue([Note](), forKey: s)
+        }
+        let query = PFQuery(className:"AnonPost")
+        query.findObjectsInBackgroundWithBlock {
+            (objects: [PFObject]?, error: NSError?) -> Void in
+            if error == nil {
+                if let objects = objects {
+                    for object in objects {
+                        let obLat = (object.objectForKey("location") as! PFGeoPoint).latitude
+                        let obLong = (object.objectForKey("location") as! PFGeoPoint).longitude
+                        let note = Note(note: object.objectForKey("note") as! String,
+                            latitude: obLat, longitude: obLong, userLat: lat, userLong: long, noteType: object.objectForKey("type") as! String)
+                        retDict[note.type!]?.append(note)
+                    }
+                }
+                completion(success: true, dict: retDict)
+            } else {
+                // Log details of the failure
+                print("Error: \(error!) \(error!.userInfo)")
+                completion(success: false, dict: retDict)
+            }
+        }
+    }
+    
+    func getUsernamePhoneNumberDict(completion: (success: Bool, dict: Dictionary<String, PFUser>) -> Void) {
+        var retDict = Dictionary<String, PFUser>()
+        let query = PFQuery(className: "_User")
+        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+            if error == nil {
+                if let objects = objects {
+                    for object in objects {
+                        let user = object as! PFUser
+                        if let number = user["phoneNumber"] {
+                            retDict[number as! String] = user
+                        }
+                    }
+                }
+                completion(success: true, dict: retDict)
+            } else {
+                print("Error: \(error!) \(error!.userInfo)")
+                completion(success: false, dict: retDict)
+            }
+        }
+    }
+    
+    func getUserByNumber(phoneNum: String, completion: (success: Bool, username: String) -> Void) {
+        var username = ""
+        let query = PFQuery(className: "_User")
+        query.whereKey("phoneNumber", equalTo: phoneNum)
+        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+            if error == nil {
+                if let objects = objects {
+                    if objects.count > 0 {
+                        username = objects[0].valueForKey("username") as! String
+                    }
+                }
+                completion(success: true, username: username)
+            } else {
+                print("Error: \(error!) \(error!.userInfo)")
+                completion(success: false, username: username)
+            }
+        }
+    }
+    
+    func findDistance(lat1: Double, long1: Double, lat2: Double, long2: Double) -> Double {
+        let r = 6371000.0
+        let phi1 = lat1 / (180.0 / M_PI)
+        let phi2 = lat2 / (180.0 / M_PI)
+        let deltaPhi = (lat2 - lat1) / (180.0 / M_PI)
+        let deltaLambda = (long2 - long1) / (180.0 / M_PI)
+        let a = (sin(deltaPhi / 2) * sin(deltaPhi / 2)) + (cos(phi1) * cos(phi2) * sin(deltaLambda / 2) * sin(deltaLambda / 2))
+        let c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        let d = r * c
+        return d * 1.0936
+    }
+    
+    func findDirection(lat1: Double, long1: Double, lat2: Double, long2: Double) -> Double {
+        let phi1 = lat1 / (180.0 / M_PI)
+        let phi2 = lat2 / (180.0 / M_PI)
+        let deltaLambda = (long2 - long1) / (180.0 / M_PI)
+        let curDir = atan2(sin(deltaLambda) * cos(phi2), (cos(phi1) * sin(phi2)) - (sin(phi1) * cos(phi2) * cos(deltaLambda)))
+        return (((curDir * (180.0 / M_PI)) + 360) % 360)
+    }
+}
